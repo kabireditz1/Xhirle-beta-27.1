@@ -16,6 +16,28 @@ Open <http://localhost:4173>. To choose another port:
 PORT=8080 node server.mjs
 ```
 
+## Use a server-side key (recommended)
+
+The key can live on the server instead of the browser, so it is never typed into the UI and
+never committed to Git. Create a `.env` file next to `server.mjs` (already git-ignored):
+
+```bash
+GEMINI_API_KEY=your-gemini-key
+XHIRLIE_PROVIDER=gemini
+XHIRLIE_MODEL=gemini-2.5-flash
+```
+
+Then run `node server.mjs`. The app detects the server key automatically: the Settings key
+field shows "Using the server-side key — leave empty" and chatting works without entering
+anything. Environment variables always override the `.env` file.
+
+Supported names: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY` (or `GOOGLE_API_KEY`),
+plus `XHIRLIE_API_KEY` as a fallback for any provider. Optional defaults:
+`XHIRLIE_PROVIDER`, `XHIRLIE_MODEL`, `XHIRLIE_ENDPOINT`.
+
+A key typed into Settings still works and takes priority over the server key when
+**Remember API key on this device** is used.
+
 ## Connect a model
 
 Open **Settings** and choose a protocol:

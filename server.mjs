@@ -9,6 +9,49 @@ const PORT = Number(process.env.PORT) || 4173;
 const HOST = '0.0.0.0';
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
 
+// Optional local .env file. Values already set in the environment always win.
+function loadEnvFile() {
+  let raw = '';
+  try {
+    raw = fs.readFileSync(path.join(__dirname, '.env'), 'utf8');
+  } catch {
+    return;
+  }
+  for (const line of raw.split(/\r?\n/)) {
+    const match = /^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/.exec(line);
+    if (!match) continue;
+    const name = match[1];
+    let value = match[2].trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    if (!process.env[name]) process.env[name] = value;
+  }
+}
+loadEnvFile();
+
+const PROVIDER_KEY_ENV = {
+  openai: ['OPENAI_API_KEY', 'XHIRLIE_API_KEY'],
+  anthropic: ['ANTHROPIC_API_KEY', 'XHIRLIE_API_KEY'],
+  gemini: ['GEMINI_API_KEY', 'GOOGLE_API_KEY', 'XHIRLIE_API_KEY'],
+};
+
+// A key can be supplied by the server (env / .env) so it never has to be typed
+// into the browser or committed to the repository.
+function serverApiKey(provider) {
+  for (const name of PROVIDER_KEY_ENV[provider] || []) {
+    const value = String(process.env[name] || '').trim();
+    if (value) return value;
+  }
+  return '';
+}
+
+const DEFAULT_ENDPOINTS = {
+  openai: 'https://api.openai.com/v1',
+  anthropic: 'https://api.anthropic.com',
+  gemini: 'https://generativelanguage.googleapis.com',
+};
+
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -110,7 +153,7 @@ function anthropicEndpoint(input) {
   return url;
 }
 
-function geminiEndpoint(input, model, stream, apiKey) {
+function geminiEndpoint(input, model, stream) {
   const url = endpointUrl(input, 'https://generativelanguage.googleapis.com');
   const pathName = url.pathname.replace(/\/+$/, '');
   if (!/\/models\/[^/]+:(?:generateContent|streamGenerateContent)$/i.test(pathName)) {
@@ -123,7 +166,6 @@ function geminiEndpoint(input, model, stream, apiKey) {
     }
   }
   if (stream) url.searchParams.set('alt', 'sse');
-  if (apiKey) url.searchParams.set('key', apiKey);
   return url;
 }
 
@@ -140,7 +182,7 @@ function buildUpstreamRequest(rawSettings, rawMessages, stream) {
   const settings = rawSettings && typeof rawSettings === 'object' ? rawSettings : {};
   const provider = String(settings.provider || 'openai').toLowerCase();
   const model = String(settings.model || '').trim();
-  const apiKey = String(settings.apiKey || '').trim();
+  const apiKey = String(settings.apiKey || '').trim() || serverApiKey(provider);
   const systemPrompt = String(settings.systemPrompt || '').trim().slice(0, 12_000);
   const temperature = Math.max(0, Math.min(2, Number(settings.temperature ?? 0.7)));
   const maxTokens = Math.max(1, Math.min(32_000, Math.round(Number(settings.maxTokens) || 2048)));
@@ -164,6 +206,7 @@ function buildUpstreamRequest(rawSettings, rawMessages, stream) {
     const headers = { 'Content-Type': 'application/json' };
     if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
     return {
+      apiKey,
       url,
       options: {
         method: 'POST',
@@ -190,6 +233,7 @@ function buildUpstreamRequest(rawSettings, rawMessages, stream) {
     };
     if (apiKey) headers['x-api-key'] = apiKey;
     return {
+      apiKey,
       url,
       options: {
         method: 'POST',
@@ -206,18 +250,21 @@ function buildUpstreamRequest(rawSettings, rawMessages, stream) {
     };
   }
 
-  const url = geminiEndpoint(endpoint, model, stream, apiKey);
+  const url = geminiEndpoint(endpoint, model, stream);
   checkCredentials(url, apiKey);
   const systemParts = [systemPrompt, ...messages.filter((item) => item.role === 'system').map((item) => item.content)].filter(Boolean);
   const contents = messages.filter((item) => item.role !== 'system').map((item) => ({
     role: item.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: item.content }],
   }));
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) headers['x-goog-api-key'] = apiKey;
   return {
+    apiKey,
     url,
     options: {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         ...(systemParts.length ? { systemInstruction: { parts: [{ text: systemParts.join('\n\n') }] } } : {}),
         contents,
@@ -317,8 +364,8 @@ async function handleChat(req, res) {
   const settings = body.settings || {};
   const messages = cleanMessages(body.messages);
   const provider = String(settings.provider || 'openai').toLowerCase();
-  const apiKey = String(settings.apiKey || '').trim();
   const upstreamRequest = buildUpstreamRequest(settings, messages, true);
+  const apiKey = upstreamRequest.apiKey;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 180_000);
   res.on('close', () => {
@@ -364,8 +411,8 @@ async function handleTest(req, res) {
   const body = await readJson(req);
   const settings = body.settings || {};
   const provider = String(settings.provider || 'openai').toLowerCase();
-  const apiKey = String(settings.apiKey || '').trim();
   const upstreamRequest = buildUpstreamRequest(settings, [{ role: 'user', content: 'Reply with exactly: Xhirlie connection test successful.' }], false);
+  const apiKey = upstreamRequest.apiKey;
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 45_000);
   let upstream;
@@ -424,6 +471,23 @@ const server = http.createServer((req, res) => {
     sendJson(res, 200, { ok: true, app: 'Xhirlie beta 27' });
     return;
   }
+  if (req.method === 'GET' && requestUrl.pathname === '/api/config') {
+    const preferred = String(process.env.XHIRLIE_PROVIDER || '').toLowerCase();
+    sendJson(res, 200, {
+      serverKeys: {
+        openai: Boolean(serverApiKey('openai')),
+        anthropic: Boolean(serverApiKey('anthropic')),
+        gemini: Boolean(serverApiKey('gemini')),
+      },
+      defaults: {
+        provider: ['openai', 'anthropic', 'gemini'].includes(preferred) ? preferred : '',
+        model: String(process.env.XHIRLIE_MODEL || '').trim(),
+        endpoint: String(process.env.XHIRLIE_ENDPOINT || '').trim()
+          || (DEFAULT_ENDPOINTS[preferred] || ''),
+      },
+    });
+    return;
+  }
   if (req.method === 'POST' && requestUrl.pathname === '/api/chat') {
     handleChat(req, res).catch((error) => sendJson(res, error.status || 400, { error: error.message || 'Could not start the chat request.' }));
     return;
@@ -441,4 +505,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`Xhirlie beta 27 is running at http://${HOST}:${PORT}`);
+  for (const provider of Object.keys(PROVIDER_KEY_ENV)) {
+    if (serverApiKey(provider)) console.log(`Server-side ${provider} key detected.`);
+  }
 });

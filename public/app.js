@@ -71,6 +71,7 @@ let activeController = null;
 let isGenerating = false;
 let toastTimeout = null;
 let settingsReturnFocus = null;
+let serverConfig = { serverKeys: {}, defaults: {} };
 
 const chatList = $('#chat-list');
 const searchInput = $('#search-chats');
@@ -112,8 +113,13 @@ function isLocalEndpoint(value) {
   }
 }
 
+function hasServerKey(settingsValue = settings) {
+  return Boolean(serverConfig.serverKeys?.[settingsValue.provider]);
+}
+
 function hasConnection(settingsValue = settings) {
   if (String(settingsValue.apiKey || '').trim()) return true;
+  if (hasServerKey(settingsValue)) return true;
   return settingsValue.provider === 'openai' && isLocalEndpoint(settingsValue.endpoint);
 }
 
@@ -308,6 +314,7 @@ function populateSettingsForm() {
   endpointInput.value = settings.endpoint || '';
   modelInput.value = settings.model || '';
   apiKeyInput.value = settings.apiKey || '';
+  apiKeyInput.placeholder = hasServerKey() ? 'Using the server-side key — leave empty' : 'Paste the API key from your provider';
   rememberKeyInput.checked = Boolean(settings.rememberKey);
   systemPromptInput.value = settings.systemPrompt || '';
   temperatureInput.value = String(settings.temperature ?? 0.7);
@@ -330,19 +337,21 @@ function updateProtocolFields() {
   if (openai) {
     endpointLabel.textContent = 'API base URL';
     endpointHelp.textContent = 'Use the provider’s OpenAI Chat Completions-compatible base URL. You can edit this for a custom endpoint.';
-    keyOptional.textContent = presetSelect.value === 'ollama' || presetSelect.value === 'lmstudio' ? 'Optional for local endpoints' : 'Required for hosted APIs';
+    keyOptional.textContent = hasServerKey({ provider: 'openai' })
+      ? 'Server key active'
+      : (presetSelect.value === 'ollama' || presetSelect.value === 'lmstudio' ? 'Optional for local endpoints' : 'Required for hosted APIs');
     endpointInput.placeholder = 'https://api.openai.com/v1';
     modelInput.placeholder = PRESETS[presetSelect.value]?.model || 'e.g. provider/model-id';
   } else if (provider === 'anthropic') {
     endpointLabel.textContent = 'API base URL';
     endpointHelp.textContent = 'Anthropic Messages API base. Default: https://api.anthropic.com';
-    keyOptional.textContent = 'Required';
+    keyOptional.textContent = hasServerKey({ provider }) ? 'Server key active' : 'Required';
     endpointInput.placeholder = 'https://api.anthropic.com';
     modelInput.placeholder = 'Enter an enabled Anthropic model ID';
   } else {
     endpointLabel.textContent = 'API base URL';
     endpointHelp.textContent = 'Gemini API base. Default: https://generativelanguage.googleapis.com';
-    keyOptional.textContent = 'Required';
+    keyOptional.textContent = hasServerKey({ provider }) ? 'Server key active' : 'Required';
     endpointInput.placeholder = 'https://generativelanguage.googleapis.com';
     modelInput.placeholder = 'Enter an enabled Gemini model ID';
   }
@@ -445,7 +454,7 @@ function resizePrompt() {
 }
 
 function canUseSettings(settingsValue) {
-  return Boolean(String(settingsValue.apiKey || '').trim()) || (settingsValue.provider === 'openai' && isLocalEndpoint(settingsValue.endpoint));
+  return hasConnection(settingsValue);
 }
 
 function newConversation() {
@@ -616,6 +625,38 @@ async function copyText(text) {
   }
 }
 
+function hasStoredSettings() {
+  try {
+    return Boolean(localStorage.getItem(SETTINGS_STORAGE_KEY));
+  } catch {
+    return false;
+  }
+}
+
+async function loadServerConfig() {
+  try {
+    const response = await fetch('/api/config', { headers: { Accept: 'application/json' } });
+    if (!response.ok) return;
+    const data = await response.json();
+    serverConfig = {
+      serverKeys: data?.serverKeys && typeof data.serverKeys === 'object' ? data.serverKeys : {},
+      defaults: data?.defaults && typeof data.defaults === 'object' ? data.defaults : {},
+    };
+  } catch {
+    return;
+  }
+  const { provider, model, endpoint } = serverConfig.defaults;
+  if (hasStoredSettings() || !provider) return;
+  settings = {
+    ...settings,
+    provider,
+    preset: provider,
+    endpoint: endpoint || settings.endpoint,
+    model: model || settings.model,
+  };
+  updateHeader();
+}
+
 function applyTheme() {
   const dark = localStorage.getItem(THEME_STORAGE_KEY) !== 'light';
   document.body.classList.toggle('dark-mode', dark);
@@ -753,9 +794,10 @@ function bindEvents() {
   });
 }
 
-function initialize() {
+async function initialize() {
   try { applyTheme(); } catch { updateHeader(); }
   bindEvents();
+  await loadServerConfig();
   updateHeader();
   renderSidebar();
   renderConversation();
