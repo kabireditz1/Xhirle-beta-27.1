@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#08090b" />
+  <meta name="description" content="Xhirlie beta 27 is a calm, personal AI chat space." />
+  <title>Xhirlie beta 27 — Your personal AI</title>
+  <link rel="icon" type="image/png" href="/xhirlie-logo.png" />
+  <link rel="stylesheet" href="/styles.css?v=beta27-glass-5" />
+  <script src="/app.js?v=beta27-glass-5" defer></script>
+</head>
+  <body class="dark-mode">
+  <div class="app-shell" id="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+      <div class="sidebar-head">
+        <a class="brand" href="#" aria-label="Xhirlie beta 27 home" id="brand-home">
+          <span class="brand-symbol" aria-hidden="true"><img src="/xhirlie-logo.png" alt="" /></span>
+          <span class="brand-name">Xhirlie <span class="brand-beta">beta 27</span></span>
+        </a>
+        <button class="icon-button sidebar-close" id="sidebar-close" aria-label="Close navigation" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" /></svg>
+        </button>
+      </div>
+
+      <div class="sidebar-actions">
+        <button class="new-chat-button" id="new-chat" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+          <span>New chat</span>
+          <span class="shortcut">⌘ K</span>
+        </button>
+        <label class="search-field" for="search-chats">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.7" /><path d="m16 16 4.4 4.4" /></svg>
+          <input id="search-chats" type="search" placeholder="Search chats" autocomplete="off" />
+          <span class="search-key">/</span>
+        </label>
+      </div>
+
+      <div class="recents-heading">
+        <span>RECENTS</span>
+      </div>
+      <div class="chat-list" id="chat-list" aria-label="Recent chats"></div>
+
+      <div class="sidebar-bottom">
+        <div class="privacy-card">
+          <span class="privacy-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="5.2" y="10" width="13.6" height="10.3" rx="2.4" /><path d="M8.1 10V7.3a3.9 3.9 0 0 1 7.8 0V10M12 14v2.4" /></svg>
+          </span>
+          <div class="privacy-copy"><strong>Your space, your rules</strong><span>API keys stay in your browser.</span></div>
+        </div>
+        <button class="settings-nav" id="open-settings" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.8a3.2 3.2 0 1 0 0 6.4 3.2 3.2 0 0 0 0-6.4Z" /><path d="m19.2 13.8 1.2.9-1.8 3.1-1.4-.6a7.6 7.6 0 0 1-1.5.9l-.2 1.5h-3.6l-.2-1.5a7.7 7.7 0 0 1-1.5-.9l-1.4.6L7 14.7l1.2-.9a6.8 6.8 0 0 1 0-1.7L7 11.2l1.8-3.1 1.4.6a7.6 7.6 0 0 1 1.5-.9l.2-1.5h3.6l.2 1.5a7.7 7.7 0 0 1 1.5.9l1.4-.6 1.8 3.1-1.2.9a6.8 6.8 0 0 1 0 1.7Z" /></svg>
+          <span>Settings</span>
+          <svg class="settings-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+        </button>
+        <div class="sidebar-meta"><span>Made for your way of thinking.</span><span class="meta-version">BETA 27</span></div>
+      </div>
+    </aside>
+
+    <div class="mobile-scrim" id="mobile-scrim"></div>
+
+    <main class="main-panel">
+      <header class="topbar">
+        <div class="topbar-leading">
+          <button class="icon-button mobile-menu" id="mobile-menu" type="button" aria-label="Open navigation">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="main-content" id="main-content">
+        <section class="welcome-view" id="welcome-view" aria-labelledby="welcome-title">
+          <div class="welcome-mark" aria-hidden="true">
+            <span class="welcome-mark-glow"></span>
+            <img class="welcome-logo" src="/xhirlie-logo.png" alt="" />
+          </div>
+          <div class="welcome-eyebrow">A LITTLE MORE CLARITY, EVERY DAY</div>
+          <h1 id="welcome-title">What’s on<br /><span>your mind?</span></h1>
+          <p class="welcome-subtitle">A thoughtful space to ask, create, and figure things out.<br class="desktop-break" /> Private, flexible, and always yours.</p>
+          <button class="setup-callout" id="welcome-settings" type="button">
+            <span class="setup-callout-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg></span>
+            <span class="setup-callout-copy"><strong>Connect your AI</strong><span>Add a provider key to start chatting.</span></span>
+            <svg class="setup-callout-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+          </button>
+          <div class="suggestions-wrap">
+            <div class="suggestions-heading"><span>START WITH A THOUGHT</span><span>Choose a prompt</span></div>
+            <div class="suggestion-grid">
+              <button class="suggestion-card" type="button" data-prompt="Help me write a thoughtful message about..."><span class="suggestion-icon icon-write"><svg viewBox="0 0 24 24"><path d="m14.5 5.5 4 4M4 20l4.2-.9L19 8.3a2.8 2.8 0 0 0-4-4L4.2 15.1 4 20Z" /><path d="M12 20h8" /></svg></span><span><strong>Write something</strong><small>Find just the right words</small></span><svg class="card-arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button>
+              <button class="suggestion-card" type="button" data-prompt="Explain a complex topic in a clear, simple way. Start with: "><span class="suggestion-icon icon-learn"><svg viewBox="0 0 24 24"><path d="M12 18.2c-2.1-1.3-4.2-1.9-7-1.9V5.1c2.8 0 4.9.6 7 1.9 2.1-1.3 4.2-1.9 7-1.9v11.2c-2.8 0-4.9.6-7 1.9Z" /><path d="M12 7v11.2" /></svg></span><span><strong>Learn a new topic</strong><small>Make the complex feel simple</small></span><svg class="card-arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button>
+              <button class="suggestion-card" type="button" data-prompt="Help me make a realistic plan for my week. My priorities are: "><span class="suggestion-icon icon-plan"><svg viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="15" rx="2.5" /><path d="M8 3.5v4M16 3.5v4M4 10h16M8 14h3m2 0h3m-8 3h3" /></svg></span><span><strong>Plan with intention</strong><small>Turn priorities into a plan</small></span><svg class="card-arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button>
+              <button class="suggestion-card" type="button" data-prompt="I have an idea I’d like to explore. Help me shape it into a clear plan: "><span class="suggestion-icon icon-idea"><svg viewBox="0 0 24 24"><path d="M9 18h6m-5 3h4m-2-19a7 7 0 0 0-4.2 12.6c.9.7 1.2 1.3 1.2 2.4h6c0-1.1.3-1.7 1.2-2.4A7 7 0 0 0 12 2Z" /></svg></span><span><strong>Explore an idea</strong><small>Give a good thought room to grow</small></span><svg class="card-arrow" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6" /></svg></button>
+            </div>
+          </div>
+          <div class="welcome-footnote"><span class="mini-sparkle">✳</span> A little more space for your ideas.</div>
+        </section>
+
+        <section class="conversation-view hidden" id="conversation-view" aria-label="Conversation">
+          <div class="messages" id="messages"></div>
+        </section>
+      </div>
+
+      <div class="composer-area">
+        <div class="composer-shell">
+          <form id="chat-form" autocomplete="off">
+            <textarea id="prompt-input" rows="1" aria-label="Message Xhirlie beta 27" placeholder="Message Xhirlie…"></textarea>
+            <div class="composer-bottom">
+              <div class="composer-hint"><span class="enter-key">↵</span> to send <span class="hint-divider">·</span> <span class="shift-enter-key">⇧ ↵</span> for a new line</div>
+              <button class="send-button" id="send-button" type="submit" aria-label="Send message" title="Send message" disabled>
+                <svg class="send-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6" /></svg>
+                <svg class="stop-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2" /></svg>
+              </button>
+            </div>
+          </form>
+        </div>
+        <div class="composer-disclaimer">Xhirlie can make mistakes. Check important information.</div>
+      </div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="modal-backdrop hidden" id="settings-backdrop">
+    <section class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <header class="modal-header">
+        <div>
+          <div class="modal-eyebrow">MAKE IT YOURS</div>
+          <h2 id="settings-title">Model settings</h2>
+          <p>Connect the model you want to talk to.</p>
+        </div>
+        <button class="icon-button modal-close" id="close-settings" type="button" aria-label="Close settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" /></svg>
+        </button>
+      </header>
+
+      <form id="settings-form">
+        <div class="modal-body">
+          <div class="settings-note"><span class="note-lock"><svg viewBox="0 0 24 24"><rect x="5.2" y="10" width="13.6" height="10.3" rx="2.4" /><path d="M8.1 10V7.3a3.9 3.9 0 0 1 7.8 0V10" /></svg></span><span><strong>Use your own API key.</strong> Xhirlie sends it to the provider through this app’s server and does not store it there. “Remember” saves it in this browser only.</span></div>
+
+          <label class="form-field">
+            <span class="field-label">API protocol</span>
+            <select id="provider-select">
+              <option value="openai">OpenAI-compatible API</option>
+              <option value="anthropic">Anthropic Messages API</option>
+              <option value="gemini">Google Gemini API</option>
+            </select>
+            <span class="field-help">OpenAI-compatible endpoints include OpenAI, OpenRouter, Groq, DeepSeek, Together, Mistral, xAI, Ollama, LM Studio, and others.</span>
+          </label>
+
+          <div class="openai-preset-row" id="preset-row">
+            <label class="form-field preset-field">
+              <span class="field-label">Provider shortcut</span>
+              <select id="preset-select">
+                <option value="openai">OpenAI</option>
+                <option value="openrouter">OpenRouter</option>
+                <option value="groq">Groq</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="together">Together AI</option>
+                <option value="mistral">Mistral</option>
+                <option value="xai">xAI</option>
+                <option value="ollama">Ollama · local</option>
+                <option value="lmstudio">LM Studio · local</option>
+                <option value="custom">Custom endpoint</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="form-field">
+            <span class="field-label" id="endpoint-label">API base URL</span>
+            <input id="endpoint-input" type="url" placeholder="https://api.openai.com/v1" spellcheck="false" autocomplete="url" />
+            <span class="field-help" id="endpoint-help">Use the provider’s OpenAI Chat Completions-compatible base URL. You can edit this for a custom endpoint.</span>
+          </label>
+
+          <label class="form-field">
+            <span class="field-label">Model ID</span>
+            <input id="model-input" type="text" placeholder="e.g. gpt-4o-mini" spellcheck="false" autocomplete="off" required />
+            <span class="field-help">Enter the exact model ID enabled for your provider key. Model names vary by provider.</span>
+          </label>
+
+          <label class="form-field">
+            <span class="field-label key-label"><span>API key</span><span class="optional-label" id="key-optional">Required for hosted APIs</span></span>
+            <div class="password-wrap">
+              <input id="api-key-input" type="password" placeholder="Paste your provider API key" autocomplete="new-password" spellcheck="false" />
+              <button class="show-key-button" id="toggle-key" type="button" aria-label="Show API key">Show</button>
+            </div>
+            <span class="field-help">Keys are different for each provider. A key from one service will not authenticate with another.</span>
+          </label>
+
+          <label class="remember-row"><input id="remember-key" type="checkbox" /><span class="custom-checkbox"></span><span>Remember API key on this device</span></label>
+
+          <details class="advanced-settings">
+            <summary>More controls <span>Optional</span></summary>
+            <div class="advanced-content">
+              <label class="form-field">
+                <span class="field-label">Instructions for Xhirlie</span>
+                <textarea id="system-prompt-input" rows="3" placeholder="How should Xhirlie respond?"></textarea>
+                <span class="field-help">Sent with every chat to your selected model.</span>
+              </label>
+              <div class="advanced-grid">
+                <label class="form-field">
+                  <span class="field-label">Creativity <span class="range-value" id="temperature-value">0.7</span></span>
+                  <input id="temperature-input" type="range" min="0" max="2" step="0.1" value="0.7" />
+                  <span class="field-help">Lower is more focused; higher is more varied.</span>
+                </label>
+                <label class="form-field">
+                  <span class="field-label">Max response tokens</span>
+                  <input id="max-tokens-input" type="number" min="64" max="32000" step="64" value="2048" />
+                </label>
+              </div>
+            </div>
+          </details>
+          <div class="test-result" id="test-result" role="status" aria-live="polite"></div>
+        </div>
+
+        <footer class="modal-footer">
+          <button class="test-button" id="test-connection" type="button"><span class="test-spinner"></span><span class="test-button-label">Test connection</span></button>
+          <div class="footer-actions">
+            <button class="cancel-button" id="cancel-settings" type="button">Cancel</button>
+            <button class="save-button" type="submit">Save settings</button>
+          </div>
+        </footer>
+      </form>
+    </section>
+  </div>
+</body>
+</html>
